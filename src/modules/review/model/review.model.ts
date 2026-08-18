@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Model, Types } from 'mongoose';
+import { HydratedDocument, Model, Query, Types } from 'mongoose';
 import { Product } from 'src/model/product.model';
 
 export type ReviewDocument = HydratedDocument<Review>;
@@ -9,9 +9,6 @@ export type ReviewDocument = HydratedDocument<Review>;
   collection: 'Ecommerce_APP_REVIEWS',
 })
 export class Review {
-  @Prop({ type: Types.ObjectId })
-  _id!: Types.ObjectId | string;
-
   @Prop({ type: Types.ObjectId, ref: 'Product', required: true, index: true })
   product!: Types.ObjectId;
 
@@ -68,12 +65,12 @@ ReviewSchema.post('save', async function (doc: ReviewDocument) {
   await recalcProductRatings(doc.product, reviewModel);
 });
 
-ReviewSchema.post('findOneAndUpdate', async function (doc: ReviewDocument) {
+ReviewSchema.post('findOneAndUpdate', async function (this: Query<unknown, ReviewDocument>, doc: ReviewDocument) {
   if (!doc) return;
   await recalcProductRatings(doc.product, this.model as Model<Review>);
 });
 
-ReviewSchema.post('findOneAndDelete', async function (doc: ReviewDocument) {
+ReviewSchema.post('findOneAndDelete', async function (this: Query<unknown, ReviewDocument>, doc: ReviewDocument) {
   if (!doc) return;
   await recalcProductRatings(doc.product, this.model as Model<Review>);
 });

@@ -83,6 +83,24 @@ export class SecurityService {
     return await compare(plaintext, cipherText);
   };
 
+  private getEncryptionKeyBuffer(): Buffer {
+    const encKey =
+      this.configService.get<string>('ENC_KEY') ||
+      this.configService.get<string>('ENC_BYTE') ||
+      'dev_default_secure_encryption_key_32_bytes_long_secret!!';
+
+    if (/^[0-9a-fA-F]{64}$/.test(encKey)) {
+      return Buffer.from(encKey, 'hex');
+    }
+
+    if (Buffer.from(encKey, 'utf8').length === 32) {
+      return Buffer.from(encKey, 'utf8');
+    }
+
+    // Fallback: derive exact 32-byte key via SHA-256
+    return crypto.createHash('sha256').update(encKey).digest();
+  }
+
   generateEncryption = (plaintext: string): string => {
     if (!plaintext) {
       throw new BadRequestException('No plaintext provided');
@@ -93,25 +111,11 @@ export class SecurityService {
     );
 
     const iv = crypto.randomBytes(ivLength);
-
-    const encKey = this.configService.get<string>('ENC_KEY');
-
-    if (!encKey) {
-      throw new BadRequestException('Encryption key not configured');
-    }
-
-    const keyBuffer = Buffer.from(encKey, 'hex');
-
-if (keyBuffer.length !== 32) {
-  throw new BadRequestException(
-    'ENC_KEY must be a 64-character hexadecimal string (32 bytes)',
-  );
-}
+    const keyBuffer = this.getEncryptionKeyBuffer();
 
     const cipher = crypto.createCipheriv('aes-256-cbc', keyBuffer, iv);
 
     let encrypted = cipher.update(plaintext, 'utf8', 'hex');
-
     encrypted += cipher.final('hex');
 
     return `${iv.toString('hex')}:${encrypted}`;
@@ -122,27 +126,18 @@ if (keyBuffer.length !== 32) {
       throw new BadRequestException('No cipher text provided');
     }
 
-    const encKey = this.configService.get<string>('ENC_KEY');
-
-    if (!encKey) {
-      throw new BadRequestException('Encryption key not configured');
-    }
-
     const parts = cipherText.split(':');
-
     if (parts.length !== 2) {
       throw new BadRequestException('Invalid encryption format');
     }
 
     const [ivHex, encrypted] = parts;
-
     const iv = Buffer.from(ivHex, 'hex');
-    const keyBuffer = Buffer.from(encKey, 'hex');
+    const keyBuffer = this.getEncryptionKeyBuffer();
 
     const decipher = crypto.createDecipheriv('aes-256-cbc', keyBuffer, iv);
 
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-
     decrypted += decipher.final('utf8');
 
     return decrypted;

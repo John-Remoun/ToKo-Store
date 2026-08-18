@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Cairo:wght@300..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ Color themes ============
+   Each theme defines an accent scale (RGB triplets, no "rgb()" wrapper so
+   Tailwind's <alpha-value> works) for light and dark mode. */
+
+:root,
+[data-theme='emerald'] {
+  --accent-50: 236 253 245;  --accent-100: 209 250 229; --accent-200: 167 243 208;
+  --accent-300: 110 231 183; --accent-400: 52 211 153;  --accent-500: 16 185 129;
+  --accent-600: 5 150 105;   --accent-700: 4 120 87;    --accent-800: 6 95 70;
+  --accent-900: 6 78 59;     --accent-950: 2 44 34;
+  --accent-glow: 16 185 129;
+}
+[data-theme='indigo'] {
+  --accent-50: 238 242 255;  --accent-100: 224 231 255; --accent-200: 199 210 254;
+  --accent-300: 165 180 252; --accent-400: 129 140 248; --accent-500: 99 102 241;
+  --accent-600: 79 70 229;   --accent-700: 67 56 202;   --accent-800: 55 48 163;
+  --accent-900: 49 46 129;   --accent-950: 30 27 75;
+  --accent-glow: 99 102 241;
+}
+[data-theme='blue'] {
+  --accent-50: 239 246 255;  --accent-100: 219 234 254; --accent-200: 191 219 254;
+  --accent-300: 147 197 253; --accent-400: 96 165 250;  --accent-500: 59 130 246;
+  --accent-600: 37 99 235;   --accent-700: 29 78 216;   --accent-800: 30 64 175;
+  --accent-900: 30 58 138;   --accent-950: 23 37 84;
+  --accent-glow: 59 130 246;
+}
+[data-theme='rose'] {
+  --accent-50: 255 241 242;  --accent-100: 255 228 230; --accent-200: 254 205 211;
+  --accent-300: 253 164 175; --accent-400: 251 113 133; --accent-500: 244 63 94;
+  --accent-600: 225 29 72;   --accent-700: 190 18 60;   --accent-800: 159 18 57;
+  --accent-900: 136 19 55;   --accent-950: 76 5 25;
+  --accent-glow: 244 63 94;
+}
+[data-theme='slate'] {
+  --accent-50: 248 250 252;  --accent-100: 241 245 249; --accent-200: 226 232 240;
+  --accent-300: 203 213 225; --accent-400: 148 163 184; --accent-500: 100 116 139;
+  --accent-600: 71 85 105;   --accent-700: 51 65 85;    --accent-800: 30 41 59;
+  --accent-900: 15 23 42;    --accent-950: 2 6 23;
+  --accent-glow: 148 163 184;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  @apply bg-[#FAFAFC] text-zinc-900 antialiased selection:bg-accent-500 selection:text-white transition-colors duration-300;
+  @apply dark:bg-[#090A0F] dark:text-zinc-100;
+}
+
+html[lang='ar'] body {
+  font-family: 'Cairo', system-ui, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-300/80 hover:bg-zinc-400 dark:bg-zinc-700/80 dark:hover:bg-zinc-600 rounded-full transition-colors;
+}
+
+/* Shimmer Loading Effect */
+.skeleton {
+  @apply relative overflow-hidden bg-zinc-200/80 dark:bg-zinc-800/80 rounded-xl;
+}
+.skeleton::after {
+  content: '';
+  @apply absolute inset-0 -translate-x-full;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 1.8s infinite;
+}
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+}
+
+.container-app {
+  @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8;
+}
+
+/* Glassmorphism & Surface Styles */
+.glass-panel {
+  @apply bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-soft;
+}
+
+.glass-card {
+  @apply rounded-3xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-soft hover:shadow-premium hover:border-accent-500/30 transition-all duration-300;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 1.5rem;
+  background: linear-gradient(var(--card-bg, #ffffff), var(--card-bg, #ffffff)) padding-box,
+              linear-gradient(135deg, rgb(var(--accent-500)), rgba(var(--accent-500), 0.2), transparent) border-box;
+  border: 1px solid transparent;
+}
+.dark .gradient-border {
+  --card-bg: #12131a;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-zinc-900 via-accent-600 to-accent-500 dark:from-white dark:via-accent-300 dark:to-accent-400 bg-clip-text text-transparent;
+}
+
+/* Buttons */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-2xl font-medium tracking-wide transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap cursor-pointer;
+}
+
+.btn-primary {
+  @apply btn bg-zinc-950 text-white px-6 py-3 hover:bg-accent-600 dark:bg-white dark:text-zinc-950 dark:hover:bg-accent-500 dark:hover:text-white shadow-soft hover:shadow-premium hover:-translate-y-0.5;
+}
+
+.btn-accent {
+  @apply btn bg-accent-600 text-white px-6 py-3 hover:bg-accent-700 shadow-soft hover:shadow-premium hover:-translate-y-0.5;
+}
+
+.btn-outline {
+  @apply btn border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm px-6 py-3 hover:border-accent-500 hover:text-accent-600 dark:hover:border-accent-400 dark:hover:text-accent-400 hover:bg-white dark:hover:bg-zinc-900;
+}
+
+.btn-ghost {
+  @apply btn px-4 py-2.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/80;
+}
+
+.btn-icon {
+  @apply inline-flex items-center justify-center shrink-0 h-10 w-10 min-h-[40px] min-w-[40px] rounded-full text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-all duration-200 active:scale-95 cursor-pointer;
+}
+
+/* Input Fields & Forms */
+.input {
+  @apply w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm px-4 py-3 text-sm outline-none transition-all duration-200 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/15 placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100;
+}
+
+.label {
+  @apply mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400;
+}
+
+.card {
+  @apply rounded-3xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/90 shadow-soft;
+}
+
+.section-title {
+  @apply font-display text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight;
+}
+
+/* Glowing shadows */
+.glow-accent {
+  box-shadow: 0 0 25px -5px rgba(var(--accent-glow), 0.35);
+}
+

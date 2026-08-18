@@ -35,6 +35,9 @@ export class Coupon {
   @Prop({ type: Number, default: 0, min: 0 })
   minOrderValue!: number;
 
+  @Prop({ type: Number, min: 0 })
+  maxDiscount?: number;
+
   @Prop({ type: Number, required: true, min: 1 })
   maxUses!: number;
 

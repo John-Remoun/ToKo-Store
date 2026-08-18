@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { DatabaseRepository } from 'src/common/repository';
 import { Cart } from 'src/model/cart.model';
 
@@ -8,14 +8,14 @@ import { Cart } from 'src/model/cart.model';
 export class CartRepository extends DatabaseRepository<Cart> {
   constructor(
     @InjectModel(Cart.name)
-    protected readonly model: Model<Cart>,
+    public readonly model: Model<Cart>,
   ) {
     super(model);
   }
 
   async findByUserId(userId: string) {
     return this.findOne({
-      filter: { user: userId },
+      filter: { user: new Types.ObjectId(userId) },
       options: {
         populate: [
           {
@@ -34,7 +34,7 @@ export class CartRepository extends DatabaseRepository<Cart> {
 
   async clearCart(userId: string, session?: ClientSession) {
     return this.updateOne({
-      filter: { user: userId },
+      filter: { user: new Types.ObjectId(userId) },
       update: {
         $set: {
           items: [],

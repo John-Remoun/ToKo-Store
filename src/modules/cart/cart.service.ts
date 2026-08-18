@@ -33,6 +33,10 @@ export class CartService {
     return String(userId);
   }
 
+  private toObjectId(id: string) {
+    return new Types.ObjectId(id);
+  }
+
   private getEffectivePrice(product: Product): number {
     if (product.discountPrice != null && product.discountPrice >= 0) {
       return product.discountPrice;
@@ -55,7 +59,11 @@ export class CartService {
     let discount = 0;
     if (coupon) {
       if (coupon.type === CouponTypeEnum.PERCENTAGE) {
-        discount = this.round(subtotal * (coupon.value / 100));
+        let pct = this.round(subtotal * (coupon.value / 100));
+        if (coupon.maxDiscount != null && pct > coupon.maxDiscount) {
+          pct = coupon.maxDiscount;
+        }
+        discount = pct;
       } else {
         discount = this.round(Math.min(coupon.value, subtotal));
       }
@@ -68,36 +76,53 @@ export class CartService {
     return { subtotal, discount, tax, total };
   }
 
+  /**
+   * Atomically get-or-create a cart for a user using upsert.
+   * The filter and $setOnInsert both use ObjectId so Mongoose
+   * index matching is consistent.
+   */
   private async getOrCreateCart(userId: string) {
-    let cart = await this.cartRepository.findByUserId(userId);
+    const userObjectId = this.toObjectId(userId);
 
-    if (!cart) {
-      cart = await this.cartRepository.createOne({
-        data: {
-          user: new Types.ObjectId(userId),
-          items: [],
-          subtotal: 0,
-          discount: 0,
-          tax: 0,
-          total: 0,
+    const cart = await this.cartRepository.model
+      .findOneAndUpdate(
+        { user: userObjectId },
+        {
+          $setOnInsert: {
+            user: userObjectId,
+            items: [],
+            subtotal: 0,
+            discount: 0,
+            tax: 0,
+            total: 0,
+          },
         },
-      });
-    }
+        {
+          upsert: true,
+          returnDocument: 'after',
+          setDefaultsOnInsert: true,
+        },
+      )
+      .exec();
 
     return cart;
   }
 
   async getCart(user: IUser) {
     const userId = this.getUserId(user);
+    // Ensure cart exists (upsert) then return a populated version
     await this.getOrCreateCart(userId);
+    const populated = await this.cartRepository.findByUserId(userId);
     return {
       message: 'Cart retrieved',
-      data: await this.cartRepository.findByUserId(userId),
+      data: populated,
     };
   }
 
   async addItem(user: IUser, dto: AddCartItemDto) {
     const userId = this.getUserId(user);
+    const userObjectId = this.toObjectId(userId);
+
     const product = await this.productRepository.findById({
       id: dto.productId,
     });
@@ -112,12 +137,12 @@ export class CartService {
 
     const cart = await this.getOrCreateCart(userId);
     const priceAtAdd = this.getEffectivePrice(product);
-    const productObjectId = new Types.ObjectId(dto.productId);
-    const existingIndex = cart.items.findIndex(
+    const productObjectId = this.toObjectId(dto.productId);
+    const existingIndex = cart!.items.findIndex(
       (item) => String(item.product) === dto.productId,
     );
 
-    const items = [...cart.items];
+    const items = [...cart!.items];
 
     if (existingIndex >= 0) {
       const newQuantity = items[existingIndex].quantity + dto.quantity;
@@ -138,23 +163,32 @@ export class CartService {
     }
 
     let coupon: Coupon | null = null;
-    if (cart.appliedCoupon) {
-      coupon = await this.couponService.findById(String(cart.appliedCoupon));
+    if (cart!.appliedCoupon) {
+      coupon = await this.couponService.findById(String(cart!.appliedCoupon));
     }
 
     const totals = this.calculateTotals(items, coupon);
-    const updated = await this.cartRepository.updateOne({
-      filter: { user: userId },
-      update: { $set: { items, ...totals } },
-    });
+
+    // Use ObjectId in the filter so Mongoose matches the correct document
+    const updated = await this.cartRepository.model
+      .findOneAndUpdate(
+        { user: userObjectId },
+        { $set: { items, ...totals } },
+        { new: true },
+      )
+      .populate({ path: 'items.product', select: 'title slug price discountPrice images stock isActive' })
+      .populate({ path: 'appliedCoupon', select: 'code type value minOrderValue maxUses usedCount expiresAt isActive' })
+      .exec();
 
     return { message: 'Item added to cart', data: updated };
   }
 
   async updateItem(user: IUser, productId: string, quantity: number) {
     const userId = this.getUserId(user);
+    const userObjectId = this.toObjectId(userId);
+
     const cart = await this.getOrCreateCart(userId);
-    const itemIndex = cart.items.findIndex(
+    const itemIndex = cart!.items.findIndex(
       (item) => String(item.product) === productId,
     );
 
@@ -171,7 +205,7 @@ export class CartService {
       throw new BadRequestException('Insufficient stock');
     }
 
-    const items = [...cart.items];
+    const items = [...cart!.items];
     items[itemIndex] = {
       ...items[itemIndex],
       quantity,
@@ -179,43 +213,55 @@ export class CartService {
     };
 
     let coupon: Coupon | null = null;
-    if (cart.appliedCoupon) {
-      coupon = await this.couponService.findById(String(cart.appliedCoupon));
+    if (cart!.appliedCoupon) {
+      coupon = await this.couponService.findById(String(cart!.appliedCoupon));
     }
 
     const totals = this.calculateTotals(items, coupon);
-    const updated = await this.cartRepository.updateOne({
-      filter: { user: userId },
-      update: { $set: { items, ...totals } },
-    });
+    const updated = await this.cartRepository.model
+      .findOneAndUpdate(
+        { user: userObjectId },
+        { $set: { items, ...totals } },
+        { new: true },
+      )
+      .populate({ path: 'items.product', select: 'title slug price discountPrice images stock isActive' })
+      .populate({ path: 'appliedCoupon', select: 'code type value minOrderValue maxUses usedCount expiresAt isActive' })
+      .exec();
 
     return { message: 'Cart item updated', data: updated };
   }
 
   async removeItem(user: IUser, productId: string) {
     const userId = this.getUserId(user);
+    const userObjectId = this.toObjectId(userId);
+
     const cart = await this.getOrCreateCart(userId);
-    const items = cart.items.filter(
+    const items = cart!.items.filter(
       (item) => String(item.product) !== productId,
     );
 
-    if (items.length === cart.items.length) {
+    if (items.length === cart!.items.length) {
       throw new NotFoundException('Item not found in cart');
     }
 
     let coupon: Coupon | null = null;
-    if (cart.appliedCoupon) {
-      coupon = await this.couponService.findById(String(cart.appliedCoupon));
+    if (cart!.appliedCoupon) {
+      coupon = await this.couponService.findById(String(cart!.appliedCoupon));
       if (coupon) {
         this.couponService.validateCoupon(coupon, items);
       }
     }
 
     const totals = this.calculateTotals(items, coupon);
-    const updated = await this.cartRepository.updateOne({
-      filter: { user: userId },
-      update: { $set: { items, ...totals } },
-    });
+    const updated = await this.cartRepository.model
+      .findOneAndUpdate(
+        { user: userObjectId },
+        { $set: { items, ...totals } },
+        { new: true },
+      )
+      .populate({ path: 'items.product', select: 'title slug price discountPrice images stock isActive' })
+      .populate({ path: 'appliedCoupon', select: 'code type value minOrderValue maxUses usedCount expiresAt isActive' })
+      .exec();
 
     return { message: 'Item removed from cart', data: updated };
   }
@@ -228,9 +274,11 @@ export class CartService {
 
   async applyCoupon(user: IUser, dto: ApplyCouponDto) {
     const userId = this.getUserId(user);
+    const userObjectId = this.toObjectId(userId);
+
     const cart = await this.getOrCreateCart(userId);
 
-    if (!cart.items.length) {
+    if (!cart!.items.length) {
       throw new BadRequestException('Cart is empty');
     }
 
@@ -239,18 +287,18 @@ export class CartService {
       throw new NotFoundException('Coupon not found');
     }
 
-    this.couponService.validateCoupon(coupon, cart.items);
-    const totals = this.calculateTotals(cart.items, coupon);
+    this.couponService.validateCoupon(coupon, cart!.items);
+    const totals = this.calculateTotals(cart!.items, coupon);
 
-    const updated = await this.cartRepository.updateOne({
-      filter: { user: userId },
-      update: {
-        $set: {
-          appliedCoupon: coupon._id,
-          ...totals,
-        },
-      },
-    });
+    const updated = await this.cartRepository.model
+      .findOneAndUpdate(
+        { user: userObjectId },
+        { $set: { appliedCoupon: coupon._id, ...totals } },
+        { new: true },
+      )
+      .populate({ path: 'items.product', select: 'title slug price discountPrice images stock isActive' })
+      .populate({ path: 'appliedCoupon', select: 'code type value minOrderValue maxUses usedCount expiresAt isActive' })
+      .exec();
 
     return { message: 'Coupon applied', data: updated };
   }

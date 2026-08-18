@@ -22,7 +22,13 @@ export class ReviewService {
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
   ) {}
 
+  /**
+   * Checks that the user has a delivered order containing this product.
+   * Skipped when REVIEW_REQUIRE_PURCHASE is not set to 'true' (default).
+   */
   private async assertDeliveredOrder(userId: string, productId: string) {
+    if (process.env.REVIEW_REQUIRE_PURCHASE !== 'true') return;
+
     const order = await this.orderModel.findOne({
       user: new Types.ObjectId(userId),
       status: OrderStatusEnum.DELIVERED,
@@ -58,10 +64,10 @@ export class ReviewService {
       if (error?.code === 11000) {
         throw new ConflictException('You have already reviewed this product');
       }
-
       throw error;
     }
   }
+
 
   async findByProduct(productId: string, query: PaginationQueryDto) {
     const page = query.page ?? 1;

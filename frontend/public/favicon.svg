@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bg)"/>
+  <!-- Subtle border -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="none" stroke="url(#accent)" stroke-width="1.2" opacity="0.5"/>
+  <!-- Clothes hanger hook (top arc) -->
+  <path d="M32 12 C32 12 32 9 35 9 C38 9 38 12 38 12" fill="none" stroke="url(#accent)" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Hanger crossbar -->
+  <path d="M32 12 C24 18 16 22 14 26 C13 28 15 30 18 30 L46 30 C49 30 51 28 50 26 C48 22 40 18 32 12Z" fill="none" stroke="url(#accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Hanger bottom bar -->
+  <line x1="18" y1="30" x2="46" y2="30" stroke="url(#accent)" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- T letter mark subtle -->
+  <text x="32" y="48" text-anchor="middle" dominant-baseline="central" fill="#ffffff" opacity="0.9" style="font: 700 13px Georgia, serif; letter-spacing: 2px;">TOKO</text>
+</svg>

@@ -27,6 +27,8 @@ import { RedisModule } from './common/module/redis/redis.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { UserModel } from './model/user.model';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -73,6 +75,8 @@ import { UserModel } from './model/user.model';
     HealthModule,
     MetaPixelModule,
     UploadModule,
+    DashboardModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

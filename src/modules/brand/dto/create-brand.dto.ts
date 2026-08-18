@@ -16,7 +16,7 @@ export class CreateBrandDto {
   name!: string;
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
   logo?: string;
 
   @IsOptional()

@@ -52,6 +52,7 @@ describe('AuthenticationService', () => {
     };
 
     service = new AuthenticationService(
+      
       userRepository,
       {
         get: jest.fn((key: string) => {

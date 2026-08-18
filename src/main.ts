@@ -1,7 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
+import { join } from 'path';
+import * as fs from 'fs';
 import { AppModule } from './app.module';
 import { PORT, ORIGINS, DB_URI } from './config';
 import { AllExceptionsFilter } from './common/filter/all-exceptions.filter';
@@ -19,23 +22,29 @@ async function bootstrap() {
   console.log('APPLICATION_NAME =', process.env.APPLICATION_NAME);
 
   if (!DB_URI) {
-    // Fail fast and loud instead of letting Mongoose attempt to connect
-    // with `undefined` and produce a confusing low-level error.
     console.error(
       '❌ DB_URI is not set. Checked process.env.DB_URI after ConfigModule ' +
         'loaded .env.development / .env.production. Make sure the file exists ' +
-        'next to package.json and DB_URI is defined in it — and make sure ' +
-        "DB_URI isn't already exported as a shell/OS environment variable " +
-        '(those always take precedence over .env files; run `env | grep DB_URI` ' +
-        'to check).',
+        'next to package.json and DB_URI is defined in it.',
     );
     process.exit(1);
   }
   console.log('DB_URI =', maskUri(DB_URI));
 
+  // Ensure local uploads directory exists
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
   // rawBody: true is required so the Stripe webhook handler
   // (payment.controller.ts) can access req.rawBody for signature verification.
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
+
+  // Serve static assets from /uploads directory for uploaded media
+  app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
 
   // Controllers declare @Controller({ path, version: '1' }), so URI versioning
   // must be enabled or those routes would never be reachable at /api/v1/...

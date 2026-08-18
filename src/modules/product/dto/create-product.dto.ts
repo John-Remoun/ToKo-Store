@@ -46,7 +46,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
   @ArrayMaxSize(10)
   images?: string[];
 
