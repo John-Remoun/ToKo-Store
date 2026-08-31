@@ -1,0 +1,34 @@
+{
+  "showInPortfolio": true,
+  "featured": true,
+  "order": 1,
+  "title": "ToKo Store",
+  "subtitle": "Premium Fashion & Clothing E-Commerce Platform",
+  "description": "A modern full-stack luxury fashion e-commerce platform built with NestJS and React. It provides a complete online shopping experience with product catalogs, multi-image galleries, categories, brands, product variants, SKU tracking, real-time inventory management, smart shopping bags, coupons, reviews, wishlists, secure authentication, Stripe payments, and a comprehensive admin dashboard with advanced analytics and media management.",
+  "category": "Full-Stack Web Applications",
+  "metric": "Luxury E-Commerce · Real-Time Inventory · Advanced Admin Dashboard",
+  "stack": [
+    "NestJS",
+    "TypeScript",
+    "MongoDB",
+    "Mongoose",
+    "Redis",
+    "BullMQ",
+    "Upstash",
+    "Cloudinary",
+    "React",
+    "Vite",
+    "Tailwind CSS",
+    "Framer Motion",
+    "Stripe",
+    "JWT",
+    "Google OAuth",
+    "Nodemailer",
+    "i18next",
+    "Recharts"
+  ],
+  "demoUrl": "",
+  "photos": [
+    "https://github.com/John-Remoun/ToKo-Store/blob/main/portfolio-photos/cover.png"
+  ]
+}
